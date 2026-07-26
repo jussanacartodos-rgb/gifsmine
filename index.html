@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GifsMine — Protótipo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Poppins:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg:#F6F3FC;
+  --surface:#FFFFFF;
+  --ink:#1E1533;
+  --muted:#807A99;
+  --line:#ECE7F7;
+  --magenta:#FF2D87;
+  --orange:#FF7A30;
+  --yellow:#FFC93C;
+  --blue:#3E7BFA;
+  --purple:#8A3FFC;
+  --rainbow:linear-gradient(120deg,var(--magenta),var(--orange),var(--yellow),var(--blue),var(--purple));
+  --radius:22px;
+  --err:#E0245E;
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{
+  background:#EDE9F9;
+  font-family:'Poppins',sans-serif;
+  color:var(--ink);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  padding:30px 16px;
+}
+.phone{
+  width:390px;
+  height:800px;
+  background:var(--bg);
+  border-radius:44px;
+  border:2px solid #fff;
+  box-shadow:0 40px 80px -20px rgba(90,50,160,.25), 0 0 0 6px #fff, 0 0 0 8px #E4DEF6;
+  position:relative;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+.notch{
+  position:absolute; top:0; left:50%; transform:translateX(-50%);
+  width:120px; height:22px; background:#fff; border-radius:0 0 16px 16px; z-index:50;
+}
+.screen{flex:1; position:relative; overflow:hidden;}
+.view{
+  display:none;
+  flex-direction:column;
+  position:absolute; inset:0;
+  overflow-y:auto;
+}
+.view.active{display:flex;}
+
+/* ===== Brand ===== */
+.brandmark{display:flex; align-items:center; gap:8px;}
+.brandmark .bicon{
+  width:32px;height:32px; border-radius:10px; background:var(--rainbow);
+  background-size:220% 220%; position:relative; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 10px -3px rgba(138,63,252,.5); flex-shrink:0;
+}
+.brandmark .bicon::before{content:""; position:absolute; inset:3px; border:2px dashed rgba(255,255,255,.85); border-radius:7px;}
+.brandmark .bicon span{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:8px; color:#fff; z-index:2;}
+.brandmark .bword{
+  font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px;
+  background:linear-gradient(90deg,var(--magenta),var(--orange),var(--blue));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+
+/* ===== Auth screens ===== */
+.auth-wrap{flex:1; padding:36px 26px 30px; display:flex; flex-direction:column;}
+.auth-brand{display:flex; flex-direction:column; align-items:center; margin-bottom:22px;}
+.auth-brand .bicon{width:56px;height:56px; border-radius:16px; margin-bottom:12px;}
+.auth-brand .bicon span{font-size:13px;}
+.auth-brand .bword{font-size:26px;}
+.auth-tag{font-size:11.5px; color:var(--muted); margin-top:2px; text-align:center;}
+.auth-title{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px; margin-bottom:4px;}
+.auth-sub{font-size:12.5px; color:var(--muted); margin-bottom:22px;}
+.field{margin-bottom:14px;}
+.field label{font-size:11.5px; font-weight:600; color:var(--muted); margin-bottom:6px; display:block;}
+.field-input{
+  position:relative; display:flex; align-items:center;
+  background:var(--surface); border:1.5px solid var(--line); border-radius:14px;
+  padding:0 14px; height:50px;
+}
+.field-input.err{border-color:var(--err);}
+.field-input input{
+  flex:1; border:none; outline:none; background:transparent;
+  font-family:'Poppins',sans-serif; font-size:13.5px; color:var(--ink); height:100%;
+}
+.field-input input::placeholder{color:#B8B2CC;}
+.eye-btn{
+  background:none; border:none; cursor:pointer; font-size:16px; color:var(--muted);
+  padding:4px; display:flex; align-items:center; justify-content:center;
+}
+.err-msg{font-size:10.5px; color:var(--err); margin-top:5px; font-weight:500; display:none;}
+.err-msg.show{display:block;}
+
+.terms-row{display:flex; align-items:flex-start; gap:9px; margin:6px 0 22px;}
+.terms-row input[type=checkbox]{
+  width:18px; height:18px; margin-top:1px; accent-color:var(--magenta); flex-shrink:0; cursor:pointer;
+}
+.terms-row label{font-size:11.5px; color:var(--muted); line-height:1.5;}
+.terms-row a, .link-inline{color:var(--purple); font-weight:600; text-decoration:none; cursor:pointer;}
+
+.primary-btn{
+  width:100%; background:var(--rainbow); background-size:220% 220%; color:#fff; border:none;
+  padding:15px; border-radius:16px; font-weight:700; font-size:14.5px; font-family:'Poppins',sans-serif;
+  box-shadow:0 10px 24px -8px rgba(138,63,252,.45); cursor:pointer; margin-bottom:16px;
+}
+.primary-btn:disabled{opacity:.5; cursor:not-allowed; box-shadow:none;}
+
+.divider{display:flex; align-items:center; gap:10px; margin:8px 0 18px; color:var(--muted); font-size:11px;}
+.divider::before,.divider::after{content:""; flex:1; height:1px; background:var(--line);}
+
+.recover-tabs{display:flex; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:4px; margin-bottom:16px;}
+.recover-tab{flex:1; text-align:center; padding:9px; border-radius:11px; font-size:12px; font-weight:600; color:var(--muted); cursor:pointer;}
+.recover-tab.on{background:var(--rainbow); color:#fff;}
+
+.auth-foot{text-align:center; font-size:12.5px; color:var(--muted); margin-top:auto; padding-top:14px;}
+.auth-foot a{color:var(--magenta); font-weight:700; text-decoration:none; cursor:pointer;}
+.back-link{font-size:13px; color:var(--muted); font-weight:600; cursor:pointer; margin-bottom:18px; display:inline-flex; align-items:center; gap:6px;}
+
+.terms-body{font-size:12px; line-height:1.7; color:var(--ink); padding-bottom:20px;}
+.terms-body h4{font-family:'Baloo 2',sans-serif; font-size:14px; margin:14px 0 6px;}
+
+.toast{
+  position:absolute; bottom:26px; left:20px; right:20px;
+  background:var(--ink); color:#fff; padding:12px 16px; border-radius:14px;
+  font-size:12.5px; font-weight:500; text-align:center; opacity:0; pointer-events:none;
+  transition:opacity .25s ease, transform .25s ease; transform:translateY(10px); z-index:100;
+}
+.toast.show{opacity:1; transform:translateY(0);}
+
+/* ===== App shell (topbar/feed/nav) ===== */
+.topbar{padding:20px 18px 12px; display:flex; align-items:center; justify-content:space-between;}
+.logo{font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px; color:var(--ink);}
+.icon-btn{
+  width:34px;height:34px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center; font-size:14px; color:var(--ink);
+  box-shadow:0 2px 6px -2px rgba(90,50,160,.15); cursor:pointer;
+}
+.feed{flex:1; overflow-y:auto; padding:0 14px 90px; display:flex; flex-direction:column; gap:16px;}
+.gif-card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:0 8px 24px -12px rgba(90,50,160,.18);}
+.gif-media{width:100%; position:relative; overflow:hidden; background:linear-gradient(135deg,#F1EDFB,#F8F5FF);}
+.gif-media::before{content:""; display:block; padding-top:100%;}
+.gif-media video{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; display:block; background:#000;}
+.gif-media .loop-tag{position:absolute; top:10px; right:10px; background:rgba(255,255,255,.85); color:var(--ink); font-weight:600; font-size:10px; padding:3px 9px; border-radius:20px;}
+.gif-media .mood-pill{position:absolute; bottom:10px; left:10px; background:rgba(255,255,255,.85); color:var(--ink); font-weight:600; font-size:10.5px; padding:4px 10px; border-radius:20px;}
+.gif-media .seal{position:absolute; top:10px; left:10px; display:flex; align-items:center; gap:4px; background:rgba(255,255,255,.9); padding:4px 9px 4px 6px; border-radius:20px; font-size:10.5px; font-weight:700;}
+.gif-media .seal .medal{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;}
+.seal.gold .medal{background:linear-gradient(135deg,#FFD558,#FFA518);}
+.seal.silver .medal{background:linear-gradient(135deg,#E8ECF2,#B9C2CE);}
+.suggest-badge{position:absolute; bottom:10px; right:10px; width:26px;height:26px; border-radius:50%; background:rgba(255,255,255,.88); display:flex; align-items:center; justify-content:center; font-size:12px; cursor:pointer;}
+.suggest-line{display:flex; align-items:center; gap:5px; font-size:11px; color:var(--muted); font-weight:500; margin-top:6px;}
+.suggest-line b{color:var(--purple); font-weight:600;}
+.grad1{background:linear-gradient(120deg,#FF2D87,#FF7A30,#FFC93C,#FF2D87); background-size:300% 300%; animation:drift 6s ease-in-out infinite;}
+.grad2{background:linear-gradient(120deg,#3E7BFA,#8A3FFC,#FF2D87,#3E7BFA); background-size:300% 300%; animation:drift 7s ease-in-out infinite;}
+.grad3{background:linear-gradient(120deg,#FFC93C,#FF7A30,#3E7BFA,#FFC93C); background-size:300% 300%; animation:drift 5.5s ease-in-out infinite;}
+@keyframes drift{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+.gif-body{padding:12px 14px 14px;}
+.gif-user{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+.avatar{width:24px;height:24px;border-radius:50%;background:linear-gradient(135deg,var(--magenta),var(--blue)); flex-shrink:0;}
+.uname{font-size:12.5px; font-weight:600;}
+.caption{font-size:13.5px; line-height:1.4; color:var(--ink); margin-bottom:6px;}
+.hashtag{color:var(--purple); font-weight:700;}
+.card-actions{display:flex; gap:16px; color:var(--muted); font-size:12px; font-weight:500;}
+.card-actions span{cursor:pointer;}
+
+.bottomnav{
+  position:absolute; bottom:0; left:0; right:0; height:76px;
+  background:rgba(255,255,255,.92); backdrop-filter:blur(14px); border-top:1px solid var(--line);
+  display:flex; align-items:center; justify-content:space-around; padding-bottom:14px; z-index:40;
+}
+.navbtn{display:flex;flex-direction:column;align-items:center;gap:4px; color:var(--muted); font-size:10px; font-weight:600; cursor:pointer; background:none;border:none;}
+.navbtn .ic{font-size:18px;}
+.navbtn.active{color:var(--magenta);}
+.navbtn.create .ic{width:40px;height:40px; background:var(--rainbow); color:#fff; border-radius:50%; display:flex;align-items:center;justify-content:center; font-size:20px; margin-top:-18px; box-shadow:0 8px 18px -4px rgba(138,63,252,.55);}
+
+/* ===== Create ===== */
+.create-wrap{padding:16px 18px 100px; flex:1; overflow-y:auto;}
+.step-label{font-weight:700; font-size:10.5px; color:var(--purple); letter-spacing:.06em; text-transform:uppercase; margin-bottom:6px;}
+.video-frame{width:100%; position:relative; overflow:hidden; border-radius:18px; background:linear-gradient(150deg,#EDE7FB,#F8F5FF); border:1px solid var(--line); margin-bottom:16px;}
+.video-frame::before{content:""; display:block; padding-top:100%;}
+.play-badge{position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:52px;height:52px; border-radius:50%; background:rgba(255,255,255,.9); border:1px solid var(--line); display:flex;align-items:center;justify-content:center; font-size:18px; color:var(--purple); cursor:pointer;}
+.trim-bar{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:20px;}
+.trim-track{height:44px; border-radius:10px; background:repeating-linear-gradient(90deg, #F1EDFB, #F1EDFB 8px, #E7E0F8 8px, #E7E0F8 16px); position:relative; overflow:hidden;}
+.trim-select{position:absolute; top:0; bottom:0; left:30%; width:38%; background:rgba(255,45,135,.12); border-left:3px solid var(--magenta); border-right:3px solid var(--magenta);}
+.trim-select .handle{position:absolute; top:50%; transform:translateY(-50%); width:14px;height:28px; background:var(--magenta); border-radius:4px;}
+.trim-select .handle.l{left:-7px;} .trim-select .handle.r{right:-7px;}
+.trim-meta{display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); margin-top:8px;}
+.field-label{font-size:12px; color:var(--muted); margin-bottom:6px; font-weight:600;}
+.input-box{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; font-size:13.5px; color:var(--ink); margin-bottom:6px; min-height:56px; outline:none; width:100%; font-family:'Poppins',sans-serif; resize:none;}
+.char-count{text-align:right; font-size:10px; color:var(--muted); margin-bottom:16px;}
+.chip-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;}
+.chip{background:#FFF1F8; border:1px solid #FFD3E9; color:var(--magenta); font-size:12px; font-weight:600; padding:6px 12px; border-radius:20px; cursor:pointer;}
+.perm-note{background:#FAF7FF; border:1px solid #E4D8FF; border-radius:14px; padding:11px 13px; font-size:11.5px; color:var(--muted); line-height:1.5; margin-bottom:18px;}
+.source-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:10px;}
+.source-card{
+  background:var(--surface); border:1.5px solid var(--line); border-radius:18px;
+  padding:22px 12px; text-align:center; cursor:pointer;
+  box-shadow:0 8px 20px -14px rgba(90,50,160,.18);
+}
+.source-card:active{border-color:var(--magenta); background:#FFF6FB;}
+.source-ic{font-size:30px; margin-bottom:10px;}
+.source-title{font-family:'Baloo 2',sans-serif; font-weight:700; font-size:14px; margin-bottom:3px;}
+.source-sub{font-size:10.5px; color:var(--muted); line-height:1.4;}
+
+#cameraFrame{background:#000;}
+#cameraFrame video{position:absolute; inset:0; width:100%; height:100%; object-fit:cover;}
+.rec-badge{
+  position:absolute; top:12px; left:12px; background:rgba(224,36,94,.9); color:#fff;
+  font-size:10.5px; font-weight:700; padding:5px 10px; border-radius:20px; letter-spacing:.03em;
+}
+.camera-controls{display:flex; align-items:center; justify-content:center; gap:34px; margin:18px 0 8px;}
+.cam-side-btn{
+  width:40px;height:40px; border-radius:50%; background:var(--surface); border:1px solid var(--line);
+  font-size:15px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.record-btn{
+  width:64px; height:64px; border-radius:50%; background:#fff; border:4px solid var(--err);
+  cursor:pointer; position:relative;
+}
+.record-btn::after{content:""; position:absolute; inset:6px; border-radius:50%; background:var(--err); transition:.2s;}
+.record-btn.recording::after{border-radius:6px; inset:16px;}
+.camera-hint{text-align:center; font-size:11px; color:var(--muted); margin-bottom:10px;}
+.retake-btn{
+  position:absolute; bottom:10px; right:10px; background:rgba(255,255,255,.9); color:var(--ink);
+  font-size:10.5px; font-weight:600; padding:6px 11px; border-radius:20px; cursor:pointer;
+}
+#trimPreview{position:absolute; inset:0; width:100%; height:100%; object-fit:contain; background:#000;}
+
+.track-suggest-box{background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:12px 14px; margin-bottom:20px; display:flex; align-items:center; gap:10px;}
+.track-suggest-box .ts-ic{width:34px;height:34px; border-radius:10px; background:linear-gradient(135deg,var(--purple),var(--blue)); color:#fff; display:flex;align-items:center;justify-content:center; font-size:14px; flex-shrink:0;}
+.track-suggest-box .ts-text{flex:1;}
+.track-suggest-box .ts-title{font-size:12.5px; font-weight:600;}
+.track-suggest-box .ts-sub{font-size:10.5px; color:var(--muted);}
+.optional-tag{font-size:9px; font-weight:600; color:var(--muted); border:1px solid var(--line); padding:2px 7px; border-radius:8px; margin-left:6px;}
+
+/* ===== Radio ===== */
+.radio-wrap{flex:1; display:flex; flex-direction:column; align-items:center; padding:14px 20px 100px; overflow-y:auto;}
+.dial-outer{width:210px; height:210px; border-radius:50%; background:var(--surface); border:3px dashed #E4B8D8; position:relative; display:flex; align-items:center; justify-content:center; margin:14px 0 20px;}
+.dial-inner{width:142px;height:142px; border-radius:50%; background:var(--rainbow); background-size:220% 220%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;}
+.dial-inner .mood-now{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:20px; color:#fff;}
+.dial-inner .mood-sub{font-size:9.5px; color:rgba(255,255,255,.9); font-weight:600; text-transform:uppercase;}
+.mood-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:100%; margin-bottom:18px;}
+.mood-btn{background:var(--surface); border:1px solid var(--line); border-radius:12px; padding:10px 6px; text-align:center; font-size:11px; color:var(--muted); font-weight:600; cursor:pointer;}
+.mood-btn.on{border-color:var(--magenta); color:var(--magenta); background:#FFF1F8;}
+.now-playing{width:100%; background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:12px 14px; display:flex; align-items:center; gap:12px; margin-bottom:12px;}
+.mini-gif{width:46px;height:46px; border-radius:10px; flex-shrink:0;}
+.np-text{flex:1; min-width:0;}
+.np-title{font-size:12.5px; font-weight:600;}
+.np-sub{font-size:10.5px; color:var(--muted);}
+.wave{display:flex; align-items:center; gap:2px; height:20px;}
+.wave span{width:2.5px; background:var(--magenta); border-radius:2px; animation:bounce 1s ease-in-out infinite;}
+.wave span:nth-child(2){animation-delay:.15s;} .wave span:nth-child(3){animation-delay:.3s;} .wave span:nth-child(4){animation-delay:.45s;} .wave span:nth-child(5){animation-delay:.6s;}
+@keyframes bounce{0%,100%{height:5px;}50%{height:18px;}}
+.audio-note{width:100%; font-size:10.5px; color:var(--muted); text-align:center; margin-bottom:16px; line-height:1.5;}
+.up-next-label{align-self:flex-start; font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; margin-bottom:8px;}
+.up-next-row{display:flex; gap:10px; width:100%; overflow-x:auto; padding-bottom:6px; margin-bottom:18px;}
+.up-thumb{width:64px;height:64px; border-radius:12px; flex-shrink:0; position:relative;}
+.up-thumb .t{position:absolute; bottom:4px; left:4px; font-size:8px; font-weight:600; background:rgba(255,255,255,.85); padding:2px 5px; border-radius:8px;}
+
+.choice-wrap{flex:1; padding:24px 20px 30px; display:flex; flex-direction:column;}
+.choice-hero{text-align:center; margin-bottom:24px;}
+.choice-hero .ic{font-size:32px; margin-bottom:8px;}
+.choice-hero h2{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:19px; margin-bottom:6px;}
+.choice-hero p{font-size:12.5px; color:var(--muted); line-height:1.5; padding:0 10px;}
+.choice-card{background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:16px; margin-bottom:14px; display:flex; align-items:center; gap:14px; cursor:pointer;}
+.choice-card.rec{border-color:var(--magenta); background:#FFF6FB;}
+.choice-ic{width:44px;height:44px; border-radius:12px; display:flex;align-items:center;justify-content:center; font-size:19px; flex-shrink:0;}
+.choice-ic.free{background:var(--rainbow); color:#fff;}
+.choice-ic.spot{background:#1EB954; color:#fff;}
+.choice-ic.apple{background:#FC3C44; color:#fff;}
+.choice-text{flex:1;}
+.choice-text .ct-title{font-size:13.5px; font-weight:700;}
+.choice-text .ct-sub{font-size:11px; color:var(--muted);}
+.tag-free{font-size:9px; font-weight:700; background:var(--magenta); color:#fff; padding:2px 7px; border-radius:8px; margin-left:6px;}
+.chev{color:var(--muted); font-size:16px;}
+
+/* ===== Profile ===== */
+.profile-wrap{flex:1; overflow-y:auto; padding:0 0 100px;}
+.profile-head{padding:18px 18px 0; text-align:center;}
+.profile-avatar{width:80px;height:80px; border-radius:50%; background:var(--rainbow); margin:0 auto 10px; border:3px dashed #fff; box-shadow:0 0 0 3px #E4B8D8;}
+.profile-name{font-family:'Baloo 2',sans-serif; font-weight:800; font-size:17px;}
+.profile-handle{color:var(--muted); font-size:12px; margin-bottom:12px;}
+.stat-row{display:flex; justify-content:center; gap:26px; margin-bottom:16px;}
+.stat{text-align:center;}
+.stat .num{font-weight:700; font-size:14px;}
+.stat .lab{font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase;}
+.mood-badge-row{display:flex; justify-content:center; gap:6px; margin-bottom:18px; flex-wrap:wrap;}
+.mood-badge{font-size:10px; font-weight:600; padding:4px 10px; border-radius:20px; border:1px solid var(--line); color:var(--purple); background:#FAF7FF;}
+.grid-tabs{display:flex; border-bottom:1px solid var(--line); margin-bottom:2px;}
+.grid-tab{flex:1; text-align:center; padding:10px; font-size:11px; color:var(--muted); font-weight:600; border-bottom:2px solid transparent; cursor:pointer;}
+.grid-tab.active{color:var(--magenta); border-color:var(--magenta);}
+.loop-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:3px; padding:3px;}
+.loop-grid .cell{aspect-ratio:1/1; position:relative; border-radius:4px; overflow:hidden;}
+.loop-grid .cell .loop-icon{position:absolute; top:5px; right:5px; font-size:10px; color:rgba(255,255,255,.9);}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="notch"></div>
+  <div class="screen">
+
+    <!-- ============ LOGIN ============ -->
+    <div id="view-login" class="view active">
+      <div class="auth-wrap">
+        <div class="auth-brand">
+          <div class="bicon"><span>GIF</span></div>
+          <div class="bword">GifsMine</div>
+          <div class="auth-tag">um gif. uma legenda. sua trilha.</div>
+        </div>
+        <div class="auth-title">Bem-vinda de volta</div>
+        <div class="auth-sub">Entre pra ver o que rolou no seu feed</div>
+
+        <div class="field">
+          <label>Email ou telefone</label>
+          <div class="field-input" id="loginEmailWrap">
+            <input type="text" id="loginEmail" placeholder="voce@email.com">
+          </div>
+          <div class="err-msg" id="loginEmailErr">Digite seu email ou telefone</div>
+        </div>
+
+        <div class="field">
+          <label>Senha</label>
+          <div class="field-input" id="loginPassWrap">
+            <input type="password" id="loginPass" placeholder="••••••••">
+            <button type="button" class="eye-btn" onclick="togglePw('loginPass', this)">👁️</button>
+          </div>
+          <div class="err-msg" id="loginPassErr">Digite sua senha</div>
+        </div>
+
+        <div style="text-align:right; margin-bottom:18px;">
+          <span class="link-inline" style="font-size:12px;" onclick="showView('view-forgot')">Esqueceu a senha?</span>
+        </div>
+
+        <button class="primary-btn" onclick="doLogin()">Entrar</button>
+
+        <div class="divider">ou</div>
+        <button class="primary-btn" style="background:var(--surface); color:var(--ink); border:1.5px solid var(--line); box-shadow:none;" onclick="showToast('Login social é só demonstração 🙂')">Continuar com Google</button>
+
+        <div class="auth-foot">
+          Não tem conta? <a onclick="showView('view-signup')">Cadastre-se</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SIGNUP ============ -->
+    <div id="view-signup" class="view">
+      <div class="auth-wrap">
+        <span class="back-link" onclick="showView('view-login')">← voltar</span>
+        <div class="auth-title">Criar sua conta</div>
+        <div class="auth-sub">Bem-vinda ao GifsMine 🎬</div>
+
+        <div class="field">
+          <label>Nome de usuário</label>
+          <div class="field-input"><input type="text" id="suName" placeholder="@seuusuario"></div>
+        </div>
+
+        <div class="field">
+          <label>Email</label>
+          <div class="field-input" id="suEmailWrap"><input type="text" id="suEmail" placeholder="voce@email.com"></div>
+          <div class="err-msg" id="suEmailErr">Digite um email válido</div>
+        </div>
+
+        <div class="field">
+          <label>Senha</label>
+          <div class="field-input" id="suPassWrap">
+            <input type="password" id="suPass" placeholder="mínimo 8 caracteres">
+            <button type="button" class="eye-btn" onclick="togglePw('suPass', this)">👁️</button>
+          </div>
+          <div class="err-msg" id="suPassErr">A senha precisa ter no mínimo 8 caracteres</div>
+        </div>
+
+        <div class="field">
+          <label>Confirmar senha</label>
+          <div class="field-input" id="suPass2Wrap">
+            <input type="password" id="suPass2" placeholder="repita a senha">
+            <button type="button" class="eye-btn" onclick="togglePw('suPass2', this)">👁️</button>
+          </div>
+          <div class="err-msg" id="suPass2Err">As senhas não coincidem</div>
+        </div>
+
+        <div class="terms-row">
+          <input type="checkbox" id="suTerms">
+          <label>Li e aceito os <a onclick="showView('view-terms')">Termos de Uso</a> e a Política de Privacidade do GifsMine</label>
+        </div>
+        <div class="err-msg" id="suTermsErr" style="margin-top:-14px; margin-bottom:14px;">Você precisa aceitar os termos pra continuar</div>
+
+        <button class="primary-btn" onclick="doSignup()">Criar conta</button>
+
+        <div class="auth-foot">
+          Já tem conta? <a onclick="showView('view-login')">Entrar</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ FORGOT PASSWORD ============ -->
+    <div id="view-forgot" class="view">
+      <div class="auth-wrap">
+        <span class="back-link" onclick="showView('view-login')">← voltar pro login</span>
+        <div class="auth-title">Recuperar senha</div>
+        <div class="auth-sub">Escolha como quer receber o link de recuperação</div>
+
+        <div class="recover-tabs">
+          <div class="recover-tab on" id="tabEmail" onclick="setRecoverTab('email')">Email</div>
+          <div class="recover-tab" id="tabPhone" onclick="setRecoverTab('phone')">Telefone</div>
+        </div>
+
+        <div class="field">
+          <label id="recoverLabel">Email cadastrado</label>
+          <div class="field-input"><input type="text" id="recoverInput" placeholder="voce@email.com"></div>
+        </div>
+
+        <button class="primary-btn" onclick="doRecover()">Enviar link de recuperação</button>
+      </div>
+    </div>
+
+    <!-- ============ TERMS ============ -->
+    <div id="view-terms" class="view">
+      <div class="auth-wrap" style="padding-top:24px;">
+        <span class="back-link" onclick="showView('view-signup')">← voltar</span>
+        <div class="auth-title">Termos de Uso</div>
+        <div class="terms-body">
+          <p>Este é um protótipo de demonstração do GifsMine, criado apenas para fins de teste visual e de fluxo. Nenhuma conta real é criada e nenhum dado é armazenado em servidor.</p>
+          <h4>1. Sobre o conteúdo</h4>
+          <p>Ao postar um GIF no GifsMine, você é responsável pelo conteúdo compartilhado, incluindo legenda, hashtag e trilha sugerida.</p>
+          <h4>2. Sobre a trilha sonora pessoal</h4>
+          <p>A trilha que você escuta enquanto navega é pessoal — depende da sua própria conexão com Spotify, Apple Music ou da biblioteca gratuita do GifsMine. O GIF em si permanece mudo para os demais usuários.</p>
+          <h4>3. Selos de qualidade</h4>
+          <p>Selos (bronze, prata, ouro) são calculados com base no engajamento relativo de cada GIF e podem mudar ao longo do tempo.</p>
+          <h4>4. Privacidade</h4>
+          <p>Este protótipo não coleta, envia nem armazena nenhuma informação real fora do seu navegador.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ FEED ============ -->
+    <div id="view-feed" class="view">
+      <div class="topbar">
+        <div class="brandmark"><div class="bicon"><span>GIF</span></div><div class="bword">GifsMine</div></div>
+        <div class="icon-btn" onclick="showToast('Notificações (demo)')">☰</div>
+      </div>
+      <div class="feed" id="feedList">
+        <div class="gif-card">
+          <div class="gif-media grad1">
+            <div class="seal silver"><span class="medal">🥈</span>Prata</div>
+            <div class="loop-tag">↻ 3.2s</div>
+            <div class="mood-pill">🔥 hype</div>
+          </div>
+          <div class="gif-body">
+            <div class="gif-user"><div class="avatar"></div><div class="uname">@carol.sc</div></div>
+            <div class="caption">o café não subiu mas a expectativa sim <span class="hashtag">#segundafeira</span></div>
+            <div class="card-actions"><span onclick="toggleLike(this)">♡ 128</span><span>↻ 14</span><span>➤</span></div>
+          </div>
+        </div>
+
+        <div class="gif-card">
+          <div class="gif-media grad2">
+            <div class="seal gold"><span class="medal">🥇</span>Ouro</div>
+            <div class="loop-tag">↻ 4.8s</div>
+            <div class="suggest-badge" onclick="showToast('🎧 Fake It Sleep — Boy Pablo')">🎧</div>
+            <div class="mood-pill">🌊 chill</div>
+          </div>
+          <div class="gif-body">
+            <div class="gif-user"><div class="avatar"></div><div class="uname">@theo.mvs</div></div>
+            <div class="caption">chuva de sábado, ninguém te chamando <span class="hashtag">#calma</span></div>
+            <div class="suggest-line">🎧 sugestão pra ouvir: <b>Fake It Sleep — Boy Pablo</b></div>
+            <div class="card-actions"><span onclick="toggleLike(this)">♡ 302</span><span>↻ 41</span><span>➤</span></div>
+          </div>
+        </div>
+
+        <div class="gif-card">
+          <div class="gif-media grad3">
+            <div class="loop-tag">↻ 2.1s</div>
+            <div class="mood-pill">☀️ nostalgia</div>
+          </div>
+          <div class="gif-body">
+            <div class="gif-user"><div class="avatar"></div><div class="uname">@nanda.rc</div></div>
+            <div class="caption">achei essa fita no fundo da gaveta <span class="hashtag">#2009vibes</span></div>
+            <div class="card-actions"><span onclick="toggleLike(this)">♡ 89</span><span>↻ 7</span><span>➤</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <button class="navbtn active" data-tab="view-feed" onclick="goTab('view-feed', this)"><span class="ic">◎</span>feed</button>
+        <button class="navbtn" data-tab="view-radioChoice" onclick="goTab('view-radioChoice', this)"><span class="ic">📻</span>radio</button>
+        <button class="navbtn create" onclick="openCreate()"><span class="ic">+</span></button>
+        <button class="navbtn" onclick="showToast('Busca (demo)')"><span class="ic">🔍</span>buscar</button>
+        <button class="navbtn" data-tab="view-profile" onclick="goTab('view-profile', this)"><span class="ic">👤</span>perfil</button>
+      </div>
+    </div>
+
+    <!-- ============ CREATE ============ -->
+    <div id="view-create" class="view">
+      <div class="topbar">
+        <div class="icon-btn" onclick="stopCameraStream(); showView('view-feed')">✕</div>
+        <div class="logo">Novo GIF</div>
+        <div style="width:34px;"></div>
+      </div>
+      <div class="create-wrap">
+
+        <!-- SOURCE STEP -->
+        <div id="sourceStep">
+          <div class="step-label">passo 1 · de onde vem o vídeo?</div>
+          <div class="perm-note">📋 o GifsMine vai pedir acesso à sua 🎥 câmera, 🎙️ microfone, 🖼️ galeria e, se você quiser marcar onde estava, 📍 localização.</div>
+          <div class="source-grid">
+            <div class="source-card" onclick="pickFromGallery()">
+              <div class="source-ic">🖼️</div>
+              <div class="source-title">Galeria</div>
+              <div class="source-sub">escolher um vídeo já salvo</div>
+            </div>
+            <div class="source-card" onclick="startCamera()">
+              <div class="source-ic">🎥</div>
+              <div class="source-title">Gravar agora</div>
+              <div class="source-sub">usar a câmera na hora</div>
+            </div>
+          </div>
+          <input type="file" id="galleryInput" accept="video/*" style="display:none" onchange="onGalleryPicked(event)">
+        </div>
+
+        <!-- CAMERA CAPTURE STEP -->
+        <div id="cameraStep" style="display:none;">
+          <div class="step-label">gravando</div>
+          <div class="video-frame" id="cameraFrame">
+            <video id="cameraPreview" autoplay muted playsinline></video>
+            <div class="rec-badge" id="recBadge" style="display:none;">● REC <span id="recTimer">0:00</span></div>
+          </div>
+          <div class="camera-controls">
+            <button class="cam-side-btn" onclick="cancelCamera()">✕</button>
+            <button class="record-btn" id="recordBtn" onclick="toggleRecording()"></button>
+            <button class="cam-side-btn" onclick="flipCamera()">🔄</button>
+          </div>
+          <div class="camera-hint" id="cameraHint">toque no botão vermelho pra gravar</div>
+        </div>
+
+        <!-- TRIM + POST STEP -->
+        <div id="trimStep" style="display:none;">
+          <div class="step-label">passo 2 · escolha o trecho</div>
+          <div class="video-frame">
+            <video id="trimPreview" muted loop playsinline autoplay></video>
+            <div class="retake-btn" onclick="retakeVideo()">↺ trocar vídeo</div>
+          </div>
+          <div class="trim-bar">
+            <div class="trim-track"><div class="trim-select"><div class="handle l"></div><div class="handle r"></div></div></div>
+            <div class="trim-meta"><span>00:00</span><span style="color:var(--magenta); font-weight:700;">3.4s selecionado</span><span>00:12</span></div>
+          </div>
+
+          <div class="step-label">passo 3 · legenda</div>
+          <div class="field-label">o que tá rolando nesse GIF?</div>
+          <textarea class="input-box" id="capInput" maxlength="80" rows="2" placeholder="escreva sua legenda..." oninput="updateCharCount()"></textarea>
+          <div class="char-count"><span id="capCount">0</span> / 80</div>
+
+          <div class="field-label">hashtag</div>
+          <div class="chip-row">
+            <div class="chip" id="hashChip" style="display:none;"></div>
+            <div class="chip" onclick="addHashtag()">+ adicionar</div>
+          </div>
+
+          <div class="field-label">localização <span class="optional-tag">opcional</span></div>
+          <div class="chip-row">
+            <div class="chip" id="locChip" onclick="addLocation()">📍 marcar onde foi</div>
+          </div>
+
+          <div class="step-label">passo 4 · trilha sugerida <span class="optional-tag">opcional</span></div>
+          <div class="track-suggest-box" onclick="showToast('Busca de faixas (demo)')">
+            <div class="ts-ic">♫</div>
+            <div class="ts-text">
+              <div class="ts-title">Toque pra sugerir uma música</div>
+              <div class="ts-sub">quem tiver Spotify/Apple Music conectado vai poder ouvir</div>
+            </div>
+          </div>
+
+          <button class="primary-btn" onclick="doPost()">Postar GIF ◎</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ RADIO CHOICE ============ -->
+    <div id="view-radioChoice" class="view">
+      <div class="topbar">
+        <div class="icon-btn" onclick="showView('view-feed')">✕</div>
+        <div class="logo">Sua rádio</div>
+        <div style="width:34px;"></div>
+      </div>
+      <div class="choice-wrap">
+        <div class="choice-hero">
+          <div class="ic">📻</div>
+          <h2>como você quer ouvir?</h2>
+          <p>o som é só seu — o GIF continua mudo pra todo mundo no feed</p>
+        </div>
+        <div class="choice-card rec" onclick="showView('view-radio')">
+          <div class="choice-ic free">◎</div>
+          <div class="choice-text"><div class="ct-title">Trilhas GifsMine <span class="tag-free">grátis</span></div><div class="ct-sub">biblioteca própria, curada por humor</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="choice-card" onclick="showView('view-radio')">
+          <div class="choice-ic spot">♫</div>
+          <div class="choice-text"><div class="ct-title">Conectar Spotify</div><div class="ct-sub">requer conta Premium</div></div>
+          <div class="chev">›</div>
+        </div>
+        <div class="choice-card" onclick="showView('view-radio')">
+          <div class="choice-ic apple">♪</div>
+          <div class="choice-text"><div class="ct-title">Conectar Apple Music</div><div class="ct-sub">usa sua assinatura</div></div>
+          <div class="chev">›</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ RADIO ============ -->
+    <div id="view-radio" class="view">
+      <div class="topbar">
+        <div class="logo">📻 GifsMine Radio</div>
+        <div class="icon-btn" onclick="showView('view-radioChoice')">⋯</div>
+      </div>
+      <div class="radio-wrap">
+        <div class="dial-outer"><div class="dial-inner"><div class="mood-now" id="moodNow">CHILL</div><div class="mood-sub">sua trilha de hoje</div></div></div>
+        <div class="mood-grid">
+          <div class="mood-btn" onclick="setMood(this,'HYPE')">🔥 hype</div>
+          <div class="mood-btn on" onclick="setMood(this,'CHILL')">🌊 chill</div>
+          <div class="mood-btn" onclick="setMood(this,'SAUDADE')">💔 saudade</div>
+          <div class="mood-btn" onclick="setMood(this,'FOCO')">🎯 foco</div>
+          <div class="mood-btn" onclick="setMood(this,'FESTA')">🎉 festa</div>
+          <div class="mood-btn" onclick="setMood(this,'RETRO')">☀️ nostalgia</div>
+        </div>
+        <div class="now-playing">
+          <div class="mini-gif grad2"></div>
+          <div class="np-text"><div class="np-title">chuva de sábado — @theo.mvs</div><div class="np-sub">tocando: Fake It Sleep — Boy Pablo</div></div>
+          <div class="wave"><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+        <div class="audio-note">🔒 só você ouve essa trilha — o GIF é mudo pra todo mundo no feed</div>
+        <div class="up-next-label">gifs em loop livre · sem ordem fixa</div>
+        <div class="up-next-row">
+          <div class="up-thumb grad1"><span class="t">↻2s</span></div>
+          <div class="up-thumb grad3"><span class="t">↻4s</span></div>
+          <div class="up-thumb grad2"><span class="t">↻3s</span></div>
+          <div class="up-thumb grad1"><span class="t">↻5s</span></div>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <button class="navbtn" data-tab="view-feed" onclick="goTab('view-feed', this)"><span class="ic">◎</span>feed</button>
+        <button class="navbtn active" data-tab="view-radio" onclick="goTab('view-radio', this)"><span class="ic">📻</span>radio</button>
+        <button class="navbtn create" onclick="openCreate()"><span class="ic">+</span></button>
+        <button class="navbtn" onclick="showToast('Busca (demo)')"><span class="ic">🔍</span>buscar</button>
+        <button class="navbtn" data-tab="view-profile" onclick="goTab('view-profile', this)"><span class="ic">👤</span>perfil</button>
+      </div>
+    </div>
+
+    <!-- ============ PROFILE ============ -->
+    <div id="view-profile" class="view">
+      <div class="profile-wrap">
+        <div class="topbar">
+          <div style="width:34px;"></div>
+          <div class="logo" id="profileHandleTop">@voce</div>
+          <div class="icon-btn" onclick="showToast('Configurações (demo)')">⚙</div>
+        </div>
+        <div class="profile-head">
+          <div class="profile-avatar"></div>
+          <div class="profile-name" id="profileName">Você</div>
+          <div class="profile-handle" id="profileHandle">@voce</div>
+          <div class="stat-row">
+            <div class="stat"><div class="num">3</div><div class="lab">gifs</div></div>
+            <div class="stat"><div class="num">0</div><div class="lab">seguidores</div></div>
+            <div class="stat"><div class="num">12</div><div class="lab">seguindo</div></div>
+          </div>
+          <div class="mood-badge-row">
+            <div class="mood-badge">🔥 hype</div>
+            <div class="mood-badge">🌊 chill</div>
+          </div>
+        </div>
+        <div class="grid-tabs">
+          <div class="grid-tab active">◎ gifs</div>
+          <div class="grid-tab">↻ remixes</div>
+          <div class="grid-tab">♡ curtidos</div>
+        </div>
+        <div class="loop-grid">
+          <div class="cell grad1"><span class="loop-icon">↻</span></div>
+          <div class="cell grad2"><span class="loop-icon">↻</span></div>
+          <div class="cell grad3"><span class="loop-icon">↻</span></div>
+        </div>
+        <div style="padding:18px;">
+          <button class="primary-btn" style="background:var(--surface); color:var(--err); border:1.5px solid var(--line); box-shadow:none;" onclick="doLogout()">Sair da conta</button>
+        </div>
+      </div>
+      <div class="bottomnav">
+        <button class="navbtn" data-tab="view-feed" onclick="goTab('view-feed', this)"><span class="ic">◎</span>feed</button>
+        <button class="navbtn" data-tab="view-radioChoice" onclick="goTab('view-radioChoice', this)"><span class="ic">📻</span>radio</button>
+        <button class="navbtn create" onclick="openCreate()"><span class="ic">+</span></button>
+        <button class="navbtn" onclick="showToast('Busca (demo)')"><span class="ic">🔍</span>buscar</button>
+        <button class="navbtn active" data-tab="view-profile" onclick="goTab('view-profile', this)"><span class="ic">👤</span>perfil</button>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL = 'https://dwxbbfaifhizpmhikacg.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR3eGJiZmFpZmhpenBtaGlrYWNnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUwODY4MzAsImV4cCI6MjEwMDY2MjgzMH0.gWgDhOTNkxvFae_ZzbCUHvgQjYapnL0yAuiRPwU3DN0';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelector('.screen').scrollTop = 0;
+}
+function goTab(id, btn){
+  showView(id);
+  const nav = btn.closest('.bottomnav');
+  nav.querySelectorAll('.navbtn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function togglePw(id, btn){
+  const input = document.getElementById(id);
+  if(input.type === 'password'){ input.type='text'; btn.textContent='🙈'; }
+  else { input.type='password'; btn.textContent='👁️'; }
+}
+function setErr(inputWrapId, errId, show){
+  document.getElementById(inputWrapId).classList.toggle('err', show);
+  document.getElementById(errId).classList.toggle('show', show);
+}
+
+async function doLogin(){
+  const email = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value.trim();
+  let ok = true;
+  setErr('loginEmailWrap','loginEmailErr', email.length === 0); if(email.length===0) ok=false;
+  setErr('loginPassWrap','loginPassErr', pass.length === 0); if(pass.length===0) ok=false;
+  if(!ok) return;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if(error){
+    showToast('⚠️ ' + (error.message === 'Invalid login credentials' ? 'Email ou senha incorretos' : error.message));
+    return;
+  }
+  await loadProfileIntoUI(data.user.id);
+  showView('view-feed');
+  await loadFeed();
+  showToast('Login realizado 🎉');
+}
+
+async function doSignup(){
+  const email = document.getElementById('suEmail').value.trim();
+  const pass = document.getElementById('suPass').value.trim();
+  const pass2 = document.getElementById('suPass2').value.trim();
+  const terms = document.getElementById('suTerms').checked;
+  let ok = true;
+  const emailOk = email.includes('@') && email.includes('.');
+  setErr('suEmailWrap','suEmailErr', !emailOk); if(!emailOk) ok=false;
+  const passOk = pass.length >= 8;
+  setErr('suPassWrap','suPassErr', !passOk); if(!passOk) ok=false;
+  const matchOk = pass2.length>0 && pass === pass2;
+  setErr('suPass2Wrap','suPass2Err', !matchOk); if(!matchOk) ok=false;
+  document.getElementById('suTermsErr').classList.toggle('show', !terms);
+  if(!terms) ok=false;
+  if(!ok) return;
+
+  const name = (document.getElementById('suName').value.trim() || email.split('@')[0]).replace('@','').replace(/\s+/g,'');
+  const { data, error } = await sb.auth.signUp({
+    email, password: pass,
+    options: { data: { username: name } }
+  });
+  if(error){
+    showToast('⚠️ ' + error.message);
+    return;
+  }
+  if(!data.session){
+    showToast('✅ Conta criada! Confirme seu email pra poder entrar.');
+    showView('view-login');
+    return;
+  }
+  await loadProfileIntoUI(data.user.id);
+  showView('view-feed');
+  await loadFeed();
+  showToast('Conta criada 🎉 Bem-vinda!');
+}
+
+async function loadProfileIntoUI(userId){
+  const { data } = await sb.from('profiles').select('username').eq('id', userId).single();
+  const uname = data ? data.username : 'voce';
+  document.getElementById('profileName').textContent = uname;
+  document.getElementById('profileHandle').textContent = '@' + uname;
+  document.getElementById('profileHandleTop').textContent = '@' + uname;
+}
+
+function setRecoverTab(type){
+  document.getElementById('tabEmail').classList.toggle('on', type==='email');
+  document.getElementById('tabPhone').classList.toggle('on', type==='phone');
+  document.getElementById('recoverLabel').textContent = type==='email' ? 'Email cadastrado' : 'Telefone cadastrado';
+  document.getElementById('recoverInput').placeholder = type==='email' ? 'voce@email.com' : '(00) 00000-0000';
+}
+async function doRecover(){
+  const val = document.getElementById('recoverInput').value.trim();
+  if(val.length===0){ showToast('Preencha o campo primeiro'); return; }
+  if(document.getElementById('tabPhone').classList.contains('on')){
+    showToast('📱 Recuperação por SMS ainda não está configurada (só email por enquanto)');
+    return;
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(val);
+  if(error){ showToast('⚠️ ' + error.message); return; }
+  showToast('✅ Link de recuperação enviado pro seu email');
+  setTimeout(()=>showView('view-login'), 1200);
+}
+
+async function toggleLike(el){
+  const postId = el.dataset.postId;
+  const liked = el.dataset.liked === '1';
+  const num = parseInt(el.textContent.replace('♡','').replace('♥','').trim());
+  el.textContent = (liked ? '♡ ' : '♥ ') + (liked ? num-1 : num+1);
+  el.dataset.liked = liked ? '0' : '1';
+  el.style.color = liked ? '' : 'var(--magenta)';
+  if(!postId) return; // demo cards without a real DB id stay visual-only
+  const { data: userData } = await sb.auth.getUser();
+  if(!userData.user) return;
+  if(liked){
+    await sb.from('likes').delete().eq('post_id', postId).eq('user_id', userData.user.id);
+  } else {
+    await sb.from('likes').insert({ post_id: postId, user_id: userData.user.id });
+  }
+}
+
+/* ===== Video source: gallery vs camera ===== */
+let cameraStream = null;
+let mediaRecorder = null;
+let recordedChunks = [];
+let recTimerInterval = null;
+let recSeconds = 0;
+let currentFacingMode = 'user';
+
+function openCreate(){
+  showCreateStep('source');
+  showView('view-create');
+}
+function showCreateStep(step){
+  document.getElementById('sourceStep').style.display = step==='source' ? 'block' : 'none';
+  document.getElementById('cameraStep').style.display = step==='camera' ? 'block' : 'none';
+  document.getElementById('trimStep').style.display = step==='trim' ? 'block' : 'none';
+}
+
+function setTrimPreview(url){
+  const preview = document.getElementById('trimPreview');
+  preview.src = url;
+}
+
+function pickFromGallery(){
+  document.getElementById('galleryInput').click();
+}
+function onGalleryPicked(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const url = URL.createObjectURL(file);
+  setTrimPreview(url);
+  showCreateStep('trim');
+  showToast('🖼️ Vídeo importado da galeria');
+}
+
+async function startCamera(){
+  try{
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video:{ facingMode: currentFacingMode },
+      audio:true
+    });
+    document.getElementById('cameraPreview').srcObject = cameraStream;
+    showCreateStep('camera');
+    showToast('🎥 Permissão de câmera e microfone concedida');
+  }catch(err){
+    showToast('⚠️ Não conseguimos acessar sua câmera. Verifique as permissões do navegador.');
+  }
+}
+function cancelCamera(){
+  stopCameraStream();
+  showCreateStep('source');
+}
+async function flipCamera(){
+  currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+  stopCameraStream();
+  await startCamera();
+}
+function stopCameraStream(){
+  if(cameraStream){
+    cameraStream.getTracks().forEach(t=>t.stop());
+    cameraStream = null;
+  }
+}
+function toggleRecording(){
+  const btn = document.getElementById('recordBtn');
+  const badge = document.getElementById('recBadge');
+  const hint = document.getElementById('cameraHint');
+  if(!mediaRecorder || mediaRecorder.state === 'inactive'){
+    recordedChunks = [];
+    try{
+      mediaRecorder = new MediaRecorder(cameraStream);
+    }catch(err){
+      showToast('⚠️ Gravação não suportada neste navegador');
+      return;
+    }
+    mediaRecorder.ondataavailable = (e)=>{ if(e.data.size>0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = ()=>{
+      const blob = new Blob(recordedChunks, {type:'video/webm'});
+      const url = URL.createObjectURL(blob);
+      setTrimPreview(url);
+      stopCameraStream();
+      showCreateStep('trim');
+      showToast('✅ Vídeo gravado com sucesso');
+    };
+    mediaRecorder.start();
+    btn.classList.add('recording');
+    badge.style.display = 'block';
+    hint.textContent = 'toque novamente pra parar';
+    recSeconds = 0;
+    recTimerInterval = setInterval(()=>{
+      recSeconds++;
+      const m = Math.floor(recSeconds/60), s = recSeconds%60;
+      document.getElementById('recTimer').textContent = m+':'+(s<10?'0':'')+s;
+    },1000);
+  } else {
+    mediaRecorder.stop();
+    btn.classList.remove('recording');
+    badge.style.display = 'none';
+    clearInterval(recTimerInterval);
+  }
+}
+function retakeVideo(){
+  document.getElementById('trimPreview').removeAttribute('src');
+  showCreateStep('source');
+}
+
+/* ===== Location permission ===== */
+function addLocation(){
+  const chip = document.getElementById('locChip');
+  if(!navigator.geolocation){
+    showToast('⚠️ Localização não suportada neste navegador');
+    return;
+  }
+  showToast('📍 Solicitando permissão de localização...');
+  navigator.geolocation.getCurrentPosition(
+    (pos)=>{
+      const lat = pos.coords.latitude.toFixed(3);
+      const lon = pos.coords.longitude.toFixed(3);
+      chip.textContent = '📍 ' + lat + ', ' + lon;
+      chip.style.background = '#EAFBF3';
+      chip.style.borderColor = '#B9F0D6';
+      chip.style.color = '#1EB954';
+      showToast('✅ Permissão de localização concedida');
+    },
+    ()=>{ showToast('⚠️ Permissão de localização negada'); },
+    { timeout:8000 }
+  );
+}
+
+function updateCharCount(){
+  const val = document.getElementById('capInput').value;
+  document.getElementById('capCount').textContent = val.length;
+}
+function addHashtag(){
+  const tag = prompt('Digite sua hashtag (sem #):', 'meugif');
+  if(tag){
+    const chip = document.getElementById('hashChip');
+    chip.textContent = '#' + tag.replace(/\s+/g,'');
+    chip.style.display = 'inline-block';
+  }
+}
+async function doPost(){
+  const trimPreview = document.getElementById('trimPreview');
+  if(!trimPreview.src){
+    showToast('⚠️ Escolha ou grave um vídeo primeiro');
+    return;
+  }
+  const { data: userData } = await sb.auth.getUser();
+  if(!userData.user){
+    showToast('⚠️ Você precisa estar logada pra postar');
+    return;
+  }
+  const caption = document.getElementById('capInput').value.trim() || 'meu novo gif';
+  const hashChip = document.getElementById('hashChip');
+  const hashtag = hashChip.style.display !== 'none' ? hashChip.textContent : '';
+  const locChip = document.getElementById('locChip');
+  const hasLoc = locChip.textContent.trim().startsWith('📍') && locChip.textContent.includes(',');
+  const [lat, lng] = hasLoc ? locChip.textContent.replace('📍','').split(',').map(s=>parseFloat(s.trim())) : [null,null];
+
+  showToast('⏳ Enviando seu GIF...');
+
+  try{
+    const videoBlob = await fetch(trimPreview.src).then(r=>r.blob());
+    const fileName = `${userData.user.id}/${Date.now()}.webm`;
+    const { error: uploadErr } = await sb.storage.from('gifs').upload(fileName, videoBlob, { contentType: videoBlob.type || 'video/webm' });
+    if(uploadErr) throw uploadErr;
+
+    const { data: pub } = sb.storage.from('gifs').getPublicUrl(fileName);
+    const publicUrl = pub.publicUrl;
+
+    const { error: insertErr } = await sb.from('posts').insert({
+      user_id: userData.user.id,
+      video_url: publicUrl,
+      caption, hashtag,
+      location_lat: lat, location_lng: lng
+    });
+    if(insertErr) throw insertErr;
+
+    showToast('✅ GIF postado no seu feed');
+    stopCameraStream();
+    document.getElementById('capInput').value='';
+    document.getElementById('hashChip').style.display='none';
+    document.getElementById('locChip').textContent = '📍 marcar onde foi';
+    document.getElementById('locChip').style.cssText='';
+    updateCharCount();
+    showCreateStep('source');
+    showView('view-feed');
+    await loadFeed();
+    maybeAskNotifications();
+  }catch(err){
+    showToast('⚠️ Erro ao postar: ' + err.message);
+  }
+}
+
+async function loadFeed(){
+  const { data, error } = await sb
+    .from('posts_with_stats')
+    .select('*, profiles(username)')
+    .order('created_at', { ascending:false });
+  if(error){ console.error(error); return; }
+
+  const { data: userData } = await sb.auth.getUser();
+  const myLikes = new Set();
+  if(userData.user){
+    const { data: likeRows } = await sb.from('likes').select('post_id').eq('user_id', userData.user.id);
+    (likeRows||[]).forEach(r=>myLikes.add(r.post_id));
+  }
+
+  const list = document.getElementById('feedList');
+  list.querySelectorAll('.gif-card[data-db="1"]').forEach(c=>c.remove());
+  const fragment = document.createDocumentFragment();
+
+  data.forEach(post=>{
+    const card = document.createElement('div');
+    card.className = 'gif-card';
+    card.dataset.db = '1';
+    const sealHtml = post.seal ? `<div class="seal ${post.seal}"><span class="medal">${post.seal==='gold'?'🥇':post.seal==='silver'?'🥈':'🥉'}</span>${post.seal==='gold'?'Ouro':post.seal==='silver'?'Prata':'Bronze'}</div>` : '';
+    const liked = myLikes.has(post.id);
+    card.innerHTML = `
+      <div class="gif-media">
+        <video src="${post.video_url}" autoplay muted loop playsinline></video>
+        ${sealHtml}
+        <div class="loop-tag">↻ gif</div>
+        <div class="mood-pill">✨ ${post.mood || 'seu gif'}</div>
+      </div>
+      <div class="gif-body">
+        <div class="gif-user"><div class="avatar"></div><div class="uname">@${post.profiles ? post.profiles.username : 'usuario'}</div></div>
+        <div class="caption">${post.caption} ${post.hashtag ? '<span class="hashtag">'+post.hashtag+'</span>' : ''}</div>
+        <div class="card-actions">
+          <span onclick="toggleLike(this)" data-post-id="${post.id}" data-liked="${liked?'1':'0'}" style="${liked?'color:var(--magenta);':''}">${liked?'♥':'♡'} ${post.like_count}</span>
+          <span>↻ 0</span><span>➤</span>
+        </div>
+      </div>
+    `;
+    fragment.appendChild(card);
+  });
+  list.prepend(fragment);
+}
+function maybeAskNotifications(){
+  if(!('Notification' in window)) return;
+  if(Notification.permission === 'default'){
+    setTimeout(()=>{
+      Notification.requestPermission().then(result=>{
+        if(result === 'granted') showToast('🔔 Notificações ativadas — você vai saber quando ganhar um selo');
+        else showToast('🔕 Notificações desativadas (você pode ativar depois)');
+      });
+    }, 1400);
+  }
+}
+
+function setMood(el, name){
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('moodNow').textContent = name;
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  showView('view-login');
+  showToast('Você saiu da conta');
+}
+
+/* Auto-login if there's already a valid session */
+(async function checkSession(){
+  const { data } = await sb.auth.getSession();
+  if(data.session){
+    await loadProfileIntoUI(data.session.user.id);
+    showView('view-feed');
+    await loadFeed();
+  }
+})();
+</script>
+</body>
+</html>
